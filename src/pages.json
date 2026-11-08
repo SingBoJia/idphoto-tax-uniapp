@@ -1,0 +1,107 @@
+{
+  "pages": [
+    {
+      "path": "pages/home/index",
+      "style": {
+        "navigationBarTitleText": "随身工具箱"
+      }
+    },
+    {
+      "path": "pages/idphoto/index",
+      "style": {
+        "navigationBarTitleText": "证件照"
+      }
+    },
+    {
+      "path": "pages/idphoto/edit",
+      "style": {
+        "navigationBarTitleText": "制作证件照"
+      }
+    },
+    {
+      "path": "pages/idphoto/result",
+      "style": {
+        "navigationBarTitleText": "制作完成"
+      }
+    },
+    {
+      "path": "pages/idphoto/change-size",
+      "style": {
+        "navigationBarTitleText": "修改 KB"
+      }
+    },
+    {
+      "path": "pages/idphoto/change-bg",
+      "style": {
+        "navigationBarTitleText": "换底色"
+      }
+    },
+    {
+      "path": "pages/tax/index",
+      "style": {
+        "navigationBarTitleText": "个税计算"
+      }
+    },
+    {
+      "path": "pages/tax/result",
+      "style": {
+        "navigationBarTitleText": "计算结果"
+      }
+    },
+    {
+      "path": "pages/tax/special",
+      "style": {
+        "navigationBarTitleText": "专项附加扣除"
+      }
+    },
+    {
+      "path": "pages/tax/more",
+      "style": {
+        "navigationBarTitleText": "更多税种"
+      }
+    },
+    {
+      "path": "pages/tax/generic",
+      "style": {
+        "navigationBarTitleText": "个税计算"
+      }
+    },
+    {
+      "path": "pages/mine/index",
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "随身工具箱",
+    "backgroundColor": "#F4F6FB",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#8A90A2",
+    "selectedColor": "#5C7EFC",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/idphoto/index",
+        "text": "证件照"
+      },
+      {
+        "pagePath": "pages/tax/index",
+        "text": "个税"
+      },
+      {
+        "pagePath": "pages/mine/index",
+        "text": "我的"
+      }
+    ]
+  }
+}

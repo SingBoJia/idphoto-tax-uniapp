@@ -99,12 +99,6 @@ npm run dev:h5
 
 接口约定：`POST JSON { image: base64, bgColor }`，返回 `{ image: url|base64, width?, height?, size? }`。
 
-## 与原始工程的关系
-
-- 个税：计算引擎、税率表、字段配置直接复用反编译工程。
-- 证件照：规格、核心流程与视觉重写为 uni-app 原生页面；原始工程的登录、下单、支付、第三方 AI 接口未并入。
-- 两套代码都不是直接运行反编译 WXML。
-
 ## 已验证
 
 - `npm run build:h5` 通过

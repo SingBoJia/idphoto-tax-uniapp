@@ -215,7 +215,7 @@ var require_geshui = __commonJS({
           highestTaxRate: f2,
           totalQuickDeduction: x2
         };
-      }(u2, r2, n, l, 5e3), b = h.monthlyDetails, f = h.cumulativeIncome, x = h.cumulativeTaxFree, d = h.cumulativeInsurance, T = h.cumulativeSpecialDeduction, p = h.cumulativeOtherDeduction, y = h.cumulativeTax, N = h.highestTaxRate, v = h.totalQuickDeduction, S = b[b.length - 1], D = ["".concat(f, "-").concat(x, "-").concat(d, "-").concat(T, "-").concat(p), (100 * S.taxRate).toFixed(0) + "%", S.quickDeduction, l > 1 ? b[b.length - ("annual" === i ? 1 : 2)].cumulativeTax : 0];
+      }(u2, r2, n, l, 5e3), b = h.monthlyDetails, f = h.cumulativeIncome, x = h.cumulativeTaxFree, d = h.cumulativeInsurance, T = h.cumulativeSpecialDeduction, p = h.cumulativeOtherDeduction, y = h.cumulativeTax, N = h.highestTaxRate, v = h.totalQuickDeduction, S = b[b.length - 1], D = ["".concat(f, "-").concat(x, "-").concat(d, "-").concat(T, "-").concat(p), (100 * S.taxRate).toFixed(0) + "%", S.quickDeduction, l > 1 && "annual" !== i ? b[b.length - 2].cumulativeTax : 0];
       if ("annual" === i) {
         var k = c - o - y, M = c - o - m - s;
         return {
@@ -250,6 +250,7 @@ var require_geshui = __commonJS({
         netSalary: a.utils.formatNumber(S.netSalary),
         month: l,
         calculateType: i,
+        monthlyDetails: b,
         formula: D
       };
     }
@@ -508,21 +509,23 @@ var require_nzj = __commonJS({
           content: "\u901F\u7B97\u6263\u9664\u6570"
         }],
         tipsTitle: "\u8BA1\u7B97\u8BF4\u660E",
-        tipsList: ["\u4E00\u3001\u5F81\u6536\u8303\u56F4\uFF1A\u6839\u636E\u56FD\u7A0E\u53D1[2005]9\u53F7\u6587\u4EF6\u89C4\u5B9A\uFF0C\u7EB3\u7A0E\u4EBA\u53D6\u5F97\u5168\u5E74\u4E00\u6B21\u6027\u5956\u91D1\uFF0C\u5355\u72EC\u4F5C\u4E3A\u4E00\u4E2A\u6708\u5DE5\u8D44\u3001\u85AA\u91D1\u6240\u5F97\u8BA1\u7B97\u7EB3\u7A0E\uFF0C\u7531\u6263\u7F34\u4E49\u52A1\u4EBA\u53D1\u653E\u65F6\u4EE3\u6263\u4EE3\u7F34\u3002", "\u4E8C\u3001\u8BA1\u7B97\u65B9\u6CD5\uFF1A", "1. \u5148\u5C06\u5168\u5E74\u4E00\u6B21\u6027\u5956\u91D1\u9664\u4EE512\u4E2A\u6708\uFF0C\u6309\u5176\u5546\u6570\u786E\u5B9A\u9002\u7528\u7A0E\u7387\u548C\u901F\u7B97\u6263\u9664\u6570\u3002", "2. \u5982\u679C\u53D1\u653E\u5F53\u6708\u5DE5\u8D44\u85AA\u91D1\u4F4E\u4E8E\u8D39\u7528\u6263\u9664\u989D\uFF0C\u5E94\u5C06\u5956\u91D1\u51CF\u9664\u5DEE\u989D\u540E\u518D\u786E\u5B9A\u7A0E\u7387\u3002", "3. \u8BA1\u7B97\u516C\u5F0F\uFF1A", "   - \u5F53\u6708\u5DE5\u8D44\u2265\u8D39\u7528\u6263\u9664\u989D\uFF1A\u5E94\u7EB3\u7A0E\u989D=\u5956\u91D1\xD7\u9002\u7528\u7A0E\u7387-\u901F\u7B97\u6263\u9664\u6570", "   - \u5F53\u6708\u5DE5\u8D44<\u8D39\u7528\u6263\u9664\u989D\uFF1A\u5E94\u7EB3\u7A0E\u989D=(\u5956\u91D1-\u5DEE\u989D)\xD7\u9002\u7528\u7A0E\u7387-\u901F\u7B97\u6263\u9664\u6570", "4. \u4E00\u4E2A\u7EB3\u7A0E\u5E74\u5EA6\u5185\uFF0C\u8BE5\u8BA1\u7A0E\u529E\u6CD5\u53EA\u5141\u8BB8\u91C7\u7528\u4E00\u6B21\u3002"],
+        tipsList: ["\u4E00\u3001\u653F\u7B56\u4F9D\u636E\uFF1A\u6839\u636E\u300A\u8D22\u653F\u90E8 \u7A0E\u52A1\u603B\u5C40\u5173\u4E8E\u5EF6\u7EED\u5B9E\u65BD\u5168\u5E74\u4E00\u6B21\u6027\u5956\u91D1\u4E2A\u4EBA\u6240\u5F97\u7A0E\u653F\u7B56\u7684\u516C\u544A\u300B\uFF082023\u5E74\u7B2C30\u53F7\uFF09\uFF0C\u5C45\u6C11\u4E2A\u4EBA\u53D6\u5F97\u5168\u5E74\u4E00\u6B21\u6027\u5956\u91D1\uFF0C\u57282027\u5E7412\u670831\u65E5\u524D\u53EF\u4EE5\u9009\u62E9\u4E0D\u5E76\u5165\u5F53\u5E74\u7EFC\u5408\u6240\u5F97\uFF0C\u5355\u72EC\u8BA1\u7B97\u7EB3\u7A0E\uFF1B\u4E5F\u53EF\u4EE5\u9009\u62E9\u5E76\u5165\u5F53\u5E74\u7EFC\u5408\u6240\u5F97\u8BA1\u7B97\u7EB3\u7A0E\u3002", "\u4E8C\u3001\u5355\u72EC\u8BA1\u7A0E\u65B9\u6CD5\uFF1A", "1. \u4EE5\u5168\u5E74\u4E00\u6B21\u6027\u5956\u91D1\u6536\u5165\u9664\u4EE512\u4E2A\u6708\u5F97\u5230\u7684\u6570\u989D\uFF0C\u6309\u7167\u6309\u6708\u6362\u7B97\u540E\u7684\u7EFC\u5408\u6240\u5F97\u7A0E\u7387\u8868\uFF0C\u786E\u5B9A\u9002\u7528\u7A0E\u7387\u548C\u901F\u7B97\u6263\u9664\u6570\u3002", "2. \u5E94\u7EB3\u7A0E\u989D = \u5168\u5E74\u4E00\u6B21\u6027\u5956\u91D1\u6536\u5165 \u00D7 \u9002\u7528\u7A0E\u7387 - \u901F\u7B97\u6263\u9664\u6570\u3002", "3. \u53D1\u653E\u5F53\u6708\u5DE5\u8D44\u4F4E\u4E8E5000\u5143\u65F6\uFF0C\u4E0D\u518D\u4ECE\u5956\u91D1\u4E2D\u51CF\u9664\u5DEE\u989D\uFF08\u8BE5\u89C4\u5B9A\u5DF2\u968F2019\u5E74\u65B0\u4E2A\u7A0E\u6CD5\u5B9E\u65BD\u505C\u6B62\u6267\u884C\uFF09\u3002", "\u4E09\u3001\u6CE8\u610F\u4E8B\u9879\uFF1A", "1. \u4E00\u4E2A\u7EB3\u7A0E\u5E74\u5EA6\u5185\uFF0C\u5BF9\u6BCF\u4E00\u4E2A\u7EB3\u7A0E\u4EBA\uFF0C\u8BE5\u8BA1\u7A0E\u529E\u6CD5\u53EA\u5141\u8BB8\u91C7\u7528\u4E00\u6B21\u3002", "2. \u5355\u72EC\u8BA1\u7A0E\u4E0E\u5E76\u5165\u7EFC\u5408\u6240\u5F97\u7684\u7A0E\u8D1F\u53EF\u80FD\u4E0D\u540C\uFF0C\u53EF\u5728\u5E74\u5EA6\u6C47\u7B97\u65F6\u9009\u62E9\u66F4\u4F18\u65B9\u5F0F\u3002"],
         taxBracketsTitle: "\u5E74\u7EC8\u5956\u4E2A\u4EBA\u6240\u5F97\u7A0E\u7387\u8868"
       }
     };
     var r = {
       calculateAfterTax: a,
       calculatePreTax: function() {
-        for (var e2 = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {}, t2 = Number(e2.netSalary || e2.netBonus || e2.preTaxBonus) || 0, r2 = t2, n = 2 * t2, u = (r2 + n) / 2, o = 0; o < 100; ) {
-          var l = a({
-            preTaxBonus: u
-          }).netSalary - t2;
-          if (Math.abs(l) < 0.01)
-            break;
-          l > 0 ? n = u : r2 = u, u = (r2 + n) / 2, o++;
+        var e2 = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {}, t2 = Number(e2.netSalary || e2.netBonus || e2.preTaxBonus) || 0, u = t2;
+        // 年终奖税后收入关于税前不单调（存在“雷区”），二分法可能落在错误区间。
+        // 按税率档逐档求解 税前 = (税后 - 速算扣除数) / (1 - 税率)，取落在本档区间内的最小解。
+        for (var k = 0, lo = 0, best = null; k < e.annual.length; lo = e.annual[k].threshold, k++) {
+          var br = e.annual[k], cand = (t2 - br.quick) / (1 - br.rate);
+          if (cand > 12 * lo && cand <= 12 * br.threshold && (best === null || cand < best))
+            best = cand;
         }
+        if (best !== null)
+          u = best;
         for (var i = Math.round(100 * Number(t2.toFixed(2))), x = Math.round(100 * u), c = a({
           preTaxBonus: x / 100
         }); Math.round(100 * c.netSalary) < i; )
@@ -1122,7 +1125,7 @@ var require_cbcz = __commonJS({
     var r = {
       calculateAfterTax: t,
       calculatePreTax: function() {
-        for (var e2 = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {}, r2 = Number(e2.netIncome) || 0, a = Number(e2.costs) || 0, c = r2, o = 2 * r2, n = (c + o) / 2, u = 0; u < 100; ) {
+        for (var e2 = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {}, r2 = Number(e2.netIncome || e2.netSalary) || 0, a = Number(e2.costs) || 0, c = r2, o = 2 * r2, n = (c + o) / 2, u = 0; u < 100; ) {
           var s = t({
             preTaxIncome: n,
             costs: a

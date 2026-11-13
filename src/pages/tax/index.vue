@@ -170,7 +170,7 @@
 </template>
 
 <script>
-import { taxService } from '@/tax';
+import { calculateTax } from '@/tax';
 import { TAX_TYPES } from '@/data/taxTypes';
 
 const number = (value) => Number(value) || 0;
@@ -189,6 +189,7 @@ export default {
         insurance: '',
         special: ''
       },
+      specialAppliedAt: null,
       bonus: { mode: 0, income: '' },
       labor: { mode: 0, income: '', taxpayerType: 'resident' }
     };
@@ -199,15 +200,21 @@ export default {
     }
   },
   onShow() {
+    // 只在首次进入或专项扣除页重新保存后带回，避免覆盖用户手动修改的值
     const special = uni.getStorageSync('specialDeduction');
-    if (special !== '' && special !== null && special !== undefined) {
+    const detail = uni.getStorageSync('specialDeductionDetail');
+    const savedAt = (detail && detail.savedAt) || 0;
+    if (special === '' || special === null || special === undefined) return;
+    if (this.specialAppliedAt === null || savedAt > this.specialAppliedAt) {
       this.salary.special = String(special);
+      this.specialAppliedAt = savedAt;
     }
   },
   methods: {
     setSalaryType(type) {
       this.salary.type = type;
       if (type === 'annual') this.salary.month = 12;
+      else if (this.salary.month === 12) this.salary.month = new Date().getMonth() + 1;
     },
     onMonthChange(e) {
       this.salary.month = Number(e.detail.value) + 1;
@@ -218,10 +225,16 @@ export default {
     goGeneric(type) {
       uni.navigateTo({ url: `/pages/tax/generic?type=${type}` });
     },
-    validate(income) {
+    validate(income, extras = {}) {
       if (number(income) <= 0) {
         uni.showToast({ title: '请输入金额', icon: 'none' });
         return false;
+      }
+      for (const [label, value] of Object.entries(extras)) {
+        if (number(value) < 0) {
+          uni.showToast({ title: `${label}不能为负数`, icon: 'none' });
+          return false;
+        }
       }
       return true;
     },
@@ -230,7 +243,9 @@ export default {
       uni.navigateTo({ url: '/pages/tax/result' });
     },
     calcSalary() {
-      if (!this.validate(this.salary.income)) return;
+      if (!this.validate(this.salary.income, { 五险一金: this.salary.insurance, 专项附加扣除: this.salary.special })) {
+        return;
+      }
       const params = {
         inputSalary: number(this.salary.income),
         insurance: number(this.salary.insurance),
@@ -239,7 +254,7 @@ export default {
         calculateType: this.salary.type
       };
       try {
-        const result = taxService.calculate({ taxType: '/geshui/', params });
+        const result = calculateTax({ taxType: '/geshui/', params });
         this.openResult(this.salary.type === 'annual' ? '年度工资个税' : '工资个税', '/geshui/', params, result);
       } catch (err) {
         uni.showToast({ title: err.message || '计算失败', icon: 'none' });
@@ -249,7 +264,7 @@ export default {
       if (!this.validate(this.bonus.income)) return;
       const params = { inputSalary: number(this.bonus.income), isBackward: this.bonus.mode === 1 };
       try {
-        const result = taxService.calculate({ taxType: '/nzj/', params });
+        const result = calculateTax({ taxType: '/nzj/', params });
         this.openResult('年终奖个税', '/nzj/', params, result);
       } catch (err) {
         uni.showToast({ title: err.message || '计算失败', icon: 'none' });
@@ -263,7 +278,7 @@ export default {
         isBackward: this.labor.mode === 1
       };
       try {
-        const result = taxService.calculate({ taxType: '/lwbc/', params });
+        const result = calculateTax({ taxType: '/lwbc/', params });
         this.openResult('劳务报酬个税', '/lwbc/', params, result);
       } catch (err) {
         uni.showToast({ title: err.message || '计算失败', icon: 'none' });

@@ -59,7 +59,7 @@
 </template>
 
 <script>
-import { savePhoto } from '@/services/photo';
+import { savePhoto, saveToastText, getFileSize } from '@/services/photo';
 import { fileSize } from '@/utils/format';
 
 export default {
@@ -75,25 +75,41 @@ export default {
       return fileSize(this.data && this.data.size);
     }
   },
-  onShow() {
+  async onShow() {
     const data = uni.getStorageSync('idphoto:last');
-    this.data = data || null;
+    if (!data || !data.path) {
+      this.data = null;
+      return;
+    }
+    // 旧版本存的是 blob / 临时路径，可能已失效：读不到文件就当作没有结果
+    if (/^blob:/.test(data.path) || !(await getFileSize(data.path))) {
+      uni.removeStorageSync('idphoto:last');
+      this.data = null;
+      return;
+    }
+    this.data = data;
   },
   methods: {
     async save() {
       if (!this.data) return;
       try {
-        await savePhoto(this.data.path);
-        uni.showToast({ title: '已保存', icon: 'success' });
+        const mode = await savePhoto(this.data.path);
+        uni.showToast({ title: saveToastText(mode), icon: mode === 'preview' ? 'none' : 'success' });
       } catch (err) {
         uni.showToast({ title: err.message || '保存失败', icon: 'none' });
       }
     },
     restart() {
-      uni.navigateBack({ delta: 1 });
+      const pages = getCurrentPages();
+      if (pages.length > 1) {
+        uni.navigateBack({ delta: 1 });
+      } else {
+        this.goEdit();
+      }
     },
     goEdit() {
-      uni.redirectTo({ url: '/pages/idphoto/edit?specId=one' });
+      const specId = (this.data && this.data.spec && this.data.spec.id) || 'one';
+      uni.redirectTo({ url: `/pages/idphoto/edit?specId=${specId}` });
     }
   }
 };

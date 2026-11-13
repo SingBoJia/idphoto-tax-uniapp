@@ -49,7 +49,14 @@
 </template>
 
 <script>
-import { choosePhoto, compressToTarget, getFileSize, savePhoto } from '@/services/photo';
+import {
+  choosePhoto,
+  compressToTarget,
+  getFileSize,
+  savePhoto,
+  saveToastText,
+  releaseImage
+} from '@/services/photo';
 import { fileSize } from '@/utils/format';
 
 export default {
@@ -62,24 +69,50 @@ export default {
       busy: false
     };
   },
+  onUnload() {
+    this.setResult(null);
+  },
   methods: {
     fileSize,
+    setResult(result) {
+      const old = this.result && this.result.path;
+      if (old && old !== this.imagePath && (!result || result.path !== old)) releaseImage(old);
+      this.result = result;
+    },
     async pick() {
+      if (this.busy) return;
       try {
         this.imagePath = await choosePhoto({});
         this.beforeSize = await getFileSize(this.imagePath);
-        this.result = null;
+        this.setResult(null);
       } catch (err) {
         uni.showToast({ title: err.message || '选择失败', icon: 'none' });
       }
     },
     async compress() {
-      if (!this.imagePath) return;
+      if (this.busy) return;
+      if (!this.imagePath) {
+        uni.showToast({ title: '请先选择照片', icon: 'none' });
+        return;
+      }
+      const target = Number(this.targetKB);
+      if (!target || target < 8 || target > 10240) {
+        uni.showToast({ title: '目标大小需在 8~10240 KB 之间', icon: 'none' });
+        return;
+      }
       this.busy = true;
       try {
-        this.result = await compressToTarget(this.imagePath, Number(this.targetKB) || 100);
-        if (this.result.size > (Number(this.targetKB) || 100) * 1024) {
-          uni.showToast({ title: '已压到最低质量，仍略大于目标', icon: 'none' });
+        // 证件照尺寸一般有硬性要求，这里优先只降质量；仍超标时才缩小尺寸并提示
+        const result = await compressToTarget(this.imagePath, target, { allowResize: true });
+        this.setResult(result);
+        if (result.overTarget) {
+          uni.showToast({ title: '已压到最小，仍大于目标', icon: 'none' });
+        } else if (result.resized) {
+          uni.showModal({
+            title: '已缩小尺寸',
+            content: `仅降低质量无法达到目标，已缩小为 ${result.width}×${result.height} px。若报名系统对像素有要求，请改用更大的目标 KB。`,
+            showCancel: false
+          });
         } else {
           uni.showToast({ title: '压缩完成', icon: 'success' });
         }
@@ -90,10 +123,10 @@ export default {
       }
     },
     async save() {
-      if (!this.result) return;
+      if (!this.result || this.busy) return;
       try {
-        await savePhoto(this.result.path);
-        uni.showToast({ title: '已保存', icon: 'success' });
+        const mode = await savePhoto(this.result.path);
+        uni.showToast({ title: saveToastText(mode), icon: mode === 'preview' ? 'none' : 'success' });
       } catch (err) {
         uni.showToast({ title: err.message || '保存失败', icon: 'none' });
       }

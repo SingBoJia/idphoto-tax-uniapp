@@ -28,7 +28,7 @@
     <view class="btn btn-light" @tap="reset">重置</view>
 
     <view class="note">
-      提示：子女教育、3 岁以下婴幼儿照护按每个子女 2000 元/月；住房贷款利息 1000 元/月；住房租金按城市 1500/1100/800 元/月；赡养老人独生子女 3000 元/月。大病医疗通常在年度汇算时扣除。
+      提示：子女教育、3 岁以下婴幼儿照护按每个子女 2000 元/月；住房贷款利息 1000 元/月；住房租金按城市 1500/1100/800 元/月（与房贷利息二选一）；继续教育学历 400 元/月、职业资格 3600 元/年；赡养老人独生子女 3000 元/月。大病医疗通常在年度汇算时扣除。
     </view>
   </view>
 </template>
@@ -36,15 +36,28 @@
 <script>
 import { money } from '@/utils/format';
 
+// max: 单项每月上限（元），null 表示按人数累加不设上限
 const DEFAULTS = [
-  { key: 'child', name: '子女教育', desc: '每个子女 2000 元/月', value: '0' },
-  { key: 'baby', name: '3 岁以下婴幼儿照护', desc: '每个婴幼儿 2000 元/月', value: '0' },
-  { key: 'education', name: '继续教育', desc: '学历教育 400 元/月', value: '0' },
-  { key: 'loan', name: '住房贷款利息', desc: '首套房贷 1000 元/月', value: '0' },
-  { key: 'rent', name: '住房租金', desc: '按城市 1500 / 1100 / 800 元/月', value: '0' },
-  { key: 'elder', name: '赡养老人', desc: '独生子女 3000 元/月', value: '0' },
-  { key: 'medical', name: '大病医疗', desc: '年度汇算扣除，月度可填 0', value: '0' },
-  { key: 'pension', name: '个人养老金', desc: '每年最高 12000 元，约 1000 元/月', value: '0' }
+  { key: 'child', name: '子女教育', desc: '每个子女 2000 元/月，父母可各扣 50%', value: '0', max: null },
+  { key: 'baby', name: '3 岁以下婴幼儿照护', desc: '每个婴幼儿 2000 元/月，父母可各扣 50%', value: '0', max: null },
+  {
+    key: 'education',
+    name: '继续教育',
+    desc: '学历教育 400 元/月；职业资格证书取证当年 3600 元（约 300 元/月）',
+    value: '0',
+    max: 700
+  },
+  { key: 'loan', name: '住房贷款利息', desc: '首套房贷 1000 元/月，与住房租金二选一', value: '0', max: 1000 },
+  { key: 'rent', name: '住房租金', desc: '按城市 1500 / 1100 / 800 元/月，与房贷利息二选一', value: '0', max: 1500 },
+  { key: 'elder', name: '赡养老人', desc: '独生子女 3000 元/月；非独生子女分摊，每人不超过 1500', value: '0', max: 3000 },
+  {
+    key: 'medical',
+    name: '大病医疗',
+    desc: '年度汇算扣除，每年最高 80000 元，月度一般填 0',
+    value: '0',
+    max: Math.floor(80000 / 12)
+  },
+  { key: 'pension', name: '个人养老金', desc: '每年最高 12000 元，约 1000 元/月', value: '0', max: 1000 }
 ];
 
 export default {
@@ -67,11 +80,28 @@ export default {
   },
   methods: {
     money,
+    validate() {
+      for (const item of this.items) {
+        const raw = String(item.value ?? '').trim();
+        if (raw === '') continue;
+        const n = Number(raw);
+        if (!Number.isFinite(n) || n < 0) return `${item.name}金额不正确`;
+        if (item.max !== null && n > item.max) return `${item.name}每月最多 ${item.max} 元`;
+      }
+      const get = (key) => Number((this.items.find((x) => x.key === key) || {}).value) || 0;
+      if (get('loan') > 0 && get('rent') > 0) return '住房贷款利息与住房租金只能选择其中一项';
+      return '';
+    },
     save() {
+      const error = this.validate();
+      if (error) {
+        uni.showModal({ title: '请检查填写', content: error, showCancel: false });
+        return;
+      }
       const total = Math.round(this.total * 100) / 100;
       uni.setStorageSync('specialDeduction', total);
       uni.setStorageSync('specialDeductionDetail', {
-        items: this.items.map((item) => ({ key: item.key, value: item.value })),
+        items: this.items.map((item) => ({ key: item.key, value: String(item.value ?? '').trim() || '0' })),
         savedAt: Date.now()
       });
       uni.showToast({ title: `已保存 ¥${total}/月`, icon: 'none' });

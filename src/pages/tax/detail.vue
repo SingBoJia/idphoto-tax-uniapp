@@ -12,7 +12,7 @@
             <text class="td w2">税前</text>
             <text class="td w2">五险一金</text>
             <text class="td w2">专项附加</text>
-            <text class="td w2">应纳税所得</text>
+            <text class="td w2">累计应纳税所得</text>
             <text class="td w1">税率</text>
             <text class="td w2">速算扣除</text>
             <text class="td w2">当月个税</text>

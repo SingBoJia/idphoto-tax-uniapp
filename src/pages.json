@@ -49,6 +49,12 @@
       }
     },
     {
+      "path": "pages/tax/detail",
+      "style": {
+        "navigationBarTitleText": "每月明细"
+      }
+    },
+    {
       "path": "pages/tax/special",
       "style": {
         "navigationBarTitleText": "专项附加扣除"

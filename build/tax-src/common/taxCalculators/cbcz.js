@@ -55,7 +55,7 @@ var e = [{
     var r = {
         calculateAfterTax: t,
         calculatePreTax: function() {
-            for (var e = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {}, r = Number(e.netIncome) || 0, a = Number(e.costs) || 0, c = r, o = 2 * r, n = (c + o) / 2, u = 0; u < 100;) {
+            for (var e = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {}, r = Number(e.netIncome || e.netSalary) || 0, a = Number(e.costs) || 0, c = r, o = 2 * r, n = (c + o) / 2, u = 0; u < 100;) {
                 var s = t({
                     preTaxIncome: n,
                     costs: a

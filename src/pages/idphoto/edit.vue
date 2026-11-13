@@ -15,7 +15,7 @@
         <text class="field-x">×</text>
         <input v-model="customHeight" class="field-input" type="number" placeholder="高 px" />
       </view>
-      <view class="field-tip">宽高比需在 1:1 ~ 1:2 之间，例如 295×413</view>
+      <view class="field-tip">宽高比需在 1:1 ~ 1:2 之间，单边 {{ minPx }}~{{ maxPx }} px，例如 295×413</view>
     </view>
 
     <view class="photo-card card">
@@ -49,7 +49,7 @@
     </view>
 
     <view class="action-stack">
-      <view class="btn btn-ghost" :class="{ 'is-disabled': busy }" @tap="smartCutout">
+      <view class="btn btn-ghost" :class="{ 'is-disabled': !preview || busy }" @tap="smartCutout(false)">
         {{ busy ? '处理中…' : '智能换底（本机/服务）' }}
       </view>
       <view class="btn btn-primary" :class="{ 'is-disabled': !preview || busy }" @tap="generate">
@@ -65,7 +65,17 @@
 
 <script>
 import { findSpec, specText } from '@/data/specs';
-import { choosePhoto, cutoutPhoto, renderToSpec, getFileSize } from '@/services/photo';
+import {
+  choosePhoto,
+  cutoutPhoto,
+  renderToSpec,
+  getFileSize,
+  persistImage,
+  releaseImage,
+  MAX_SPEC_PX,
+  MIN_SPEC_PX
+} from '@/services/photo';
+import { BG_COLORS, DEFAULT_BG } from '@/data/colors';
 
 export default {
   data() {
@@ -77,54 +87,66 @@ export default {
       imagePath: '',
       preview: '',
       cutoutApplied: false,
-      bgColor: '#568cd6',
+      bgColor: DEFAULT_BG,
       busy: false,
-      colors: [
-        { name: '蓝底', value: '#568cd6' },
-        { name: '红底', value: '#e93423' },
-        { name: '白底', value: '#ffffff' },
-        { name: '浅灰', value: '#e9edf5' }
-      ]
+      minPx: MIN_SPEC_PX,
+      maxPx: MAX_SPEC_PX,
+      colors: BG_COLORS
     };
   },
   computed: {
     effectiveSpec() {
       if (this.spec.id !== 'custom') return this.spec;
-      const width = Math.max(1, Math.round(Number(this.customWidth) || 295));
-      const height = Math.max(1, Math.round(Number(this.customHeight) || 413));
+      const width = Math.round(Number(this.customWidth) || 0);
+      const height = Math.round(Number(this.customHeight) || 0);
       return { ...this.spec, px: [width, height], mm: [0, 0] };
     },
     frameRatio() {
       const [w, h] = this.effectiveSpec.px;
-      return Math.round((h / w) * 100);
+      if (!w || !h) return 140;
+      return Math.min(200, Math.max(100, Math.round((h / w) * 100)));
     }
   },
   onLoad(options) {
     this.specId = (options && options.specId) || 'one';
     this.spec = findSpec(this.specId);
   },
+  onUnload() {
+    this.setPreview('');
+  },
   methods: {
     specText,
+    /** 替换预览图，并释放上一张本页生成的临时图 */
+    setPreview(path) {
+      if (this.preview && this.preview !== this.imagePath && this.preview !== path) {
+        releaseImage(this.preview);
+      }
+      this.preview = path;
+    },
     async pick(source) {
+      if (this.busy) return;
       try {
         const path = await choosePhoto({ camera: source === 'camera' });
+        this.setPreview(path);
         this.imagePath = path;
-        this.preview = path;
         this.cutoutApplied = false;
       } catch (err) {
         uni.showToast({ title: err.message || '选择失败', icon: 'none' });
       }
     },
     reset() {
+      if (this.busy) return;
+      this.setPreview('');
       this.imagePath = '';
-      this.preview = '';
       this.cutoutApplied = false;
     },
     async chooseColor(value) {
+      if (this.busy) return;
       this.bgColor = value;
       if (this.imagePath) await this.smartCutout(true);
     },
     async smartCutout(silent = false) {
+      if (this.busy) return;
       if (!this.imagePath) {
         if (!silent) uni.showToast({ title: '请先上传照片', icon: 'none' });
         return;
@@ -132,7 +154,7 @@ export default {
       this.busy = true;
       try {
         const result = await cutoutPhoto(this.imagePath, this.bgColor);
-        this.preview = result.path;
+        this.setPreview(result.path);
         this.cutoutApplied = !result.demo;
         if (result.demo && !silent) {
           uni.showToast({ title: result.message || '当前为演示模式', icon: 'none', duration: 2500 });
@@ -144,13 +166,14 @@ export default {
       }
     },
     async generate() {
+      if (this.busy) return;
       if (!this.imagePath) {
         uni.showToast({ title: '请先上传照片', icon: 'none' });
         return;
       }
       const [w, h] = this.effectiveSpec.px;
-      if (!w || !h) {
-        uni.showToast({ title: '尺寸不正确', icon: 'none' });
+      if (!w || !h || w < MIN_SPEC_PX || h < MIN_SPEC_PX || w > MAX_SPEC_PX || h > MAX_SPEC_PX) {
+        uni.showToast({ title: `宽高需在 ${MIN_SPEC_PX}~${MAX_SPEC_PX} px 之间`, icon: 'none' });
         return;
       }
       const ratio = h / w;
@@ -163,8 +186,12 @@ export default {
         const base = this.preview || this.imagePath;
         const rendered = await renderToSpec(base, w, h);
         const size = rendered.size || (await getFileSize(rendered.path));
+        // 临时路径（blob / tempFilePath）刷新或过期后会失效，先转为持久路径再存储
+        const previous = uni.getStorageSync('idphoto:last');
+        const path = await persistImage(rendered.path, previous && previous.path);
+        if (path !== rendered.path && rendered.path !== base) releaseImage(rendered.path);
         const payload = {
-          path: rendered.path,
+          path,
           size,
           width: w,
           height: h,

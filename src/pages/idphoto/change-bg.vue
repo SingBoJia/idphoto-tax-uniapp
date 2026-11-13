@@ -36,53 +36,66 @@
     <view class="btn btn-primary" :class="{ 'is-disabled': !imagePath || busy }" @tap="run">
       {{ busy ? '处理中…' : '开始换底' }}
     </view>
-    <view class="btn btn-ghost" v-if="preview" @tap="save">保存结果</view>
+    <view class="btn btn-ghost" v-if="processed && !demo" @tap="save">保存结果</view>
 
     <view v-if="demo" class="demo-note">
-      当前为演示模式：未配置抠图服务，图片未做真实背景替换。
+      未做背景替换：当前微信版本过低或不支持本机图片处理，请升级微信后重试。
     </view>
   </view>
 </template>
 
 <script>
-import { choosePhoto, cutoutPhoto, savePhoto } from '@/services/photo';
+import { choosePhoto, cutoutPhoto, savePhoto, saveToastText, releaseImage } from '@/services/photo';
+import { BG_COLORS, DEFAULT_BG } from '@/data/colors';
 
 export default {
   data() {
     return {
       imagePath: '',
       preview: '',
-      bgColor: '#568cd6',
+      bgColor: DEFAULT_BG,
       busy: false,
       demo: false,
-      colors: [
-        { name: '蓝底', value: '#568cd6' },
-        { name: '红底', value: '#e93423' },
-        { name: '白底', value: '#ffffff' },
-        { name: '浅灰', value: '#e9edf5' }
-      ]
+      processed: false,
+      colors: BG_COLORS
     };
   },
+  onUnload() {
+    this.setPreview('');
+  },
   methods: {
+    setPreview(path) {
+      if (this.preview && this.preview !== this.imagePath && this.preview !== path) {
+        releaseImage(this.preview);
+      }
+      this.preview = path;
+    },
     async pick() {
+      if (this.busy) return;
       try {
-        this.imagePath = await choosePhoto({});
-        this.preview = this.imagePath;
+        const path = await choosePhoto({});
+        this.setPreview(path);
+        this.imagePath = path;
         this.demo = false;
+        this.processed = false;
       } catch (err) {
         uni.showToast({ title: err.message || '选择失败', icon: 'none' });
       }
     },
     reset() {
+      if (this.busy) return;
+      this.setPreview('');
       this.imagePath = '';
-      this.preview = '';
       this.demo = false;
+      this.processed = false;
     },
     async choose(value) {
+      if (this.busy) return;
       this.bgColor = value;
       if (this.imagePath) await this.run();
     },
     async run() {
+      if (this.busy) return;
       if (!this.imagePath) {
         uni.showToast({ title: '请先选择照片', icon: 'none' });
         return;
@@ -90,8 +103,9 @@ export default {
       this.busy = true;
       try {
         const result = await cutoutPhoto(this.imagePath, this.bgColor);
-        this.preview = result.path;
+        this.setPreview(result.path);
         this.demo = !!result.demo;
+        this.processed = true;
         if (result.demo) {
           uni.showToast({ title: result.message || '当前为演示模式', icon: 'none', duration: 2500 });
         }
@@ -102,9 +116,10 @@ export default {
       }
     },
     async save() {
+      if (this.busy || !this.preview) return;
       try {
-        await savePhoto(this.preview);
-        uni.showToast({ title: '已保存', icon: 'success' });
+        const mode = await savePhoto(this.preview);
+        uni.showToast({ title: saveToastText(mode), icon: mode === 'preview' ? 'none' : 'success' });
       } catch (err) {
         uni.showToast({ title: err.message || '保存失败', icon: 'none' });
       }

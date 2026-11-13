@@ -125,7 +125,7 @@ var a = require("../utils.js"),
             N = h.highestTaxRate,
             v = h.totalQuickDeduction,
             S = b[b.length - 1],
-            D = ["".concat(f, "-").concat(x, "-").concat(d, "-").concat(T, "-").concat(p), (100 * S.taxRate).toFixed(0) + "%", S.quickDeduction, l > 1 ? b[b.length - ("annual" === i ? 1 : 2)].cumulativeTax : 0];
+            D = ["".concat(f, "-").concat(x, "-").concat(d, "-").concat(T, "-").concat(p), (100 * S.taxRate).toFixed(0) + "%", S.quickDeduction, l > 1 && "annual" !== i ? b[b.length - 2].cumulativeTax : 0];
         if ("annual" === i) {
             var k = c - o - y,
                 M = c - o - m - s;
@@ -161,6 +161,7 @@ var a = require("../utils.js"),
             netSalary: a.utils.formatNumber(S.netSalary),
             month: l,
             calculateType: i,
+            monthlyDetails: b,
             formula: D
         }
     }

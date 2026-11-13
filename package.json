@@ -7,7 +7,8 @@
     "dev:h5": "uni",
     "build:h5": "uni build",
     "dev:mp-weixin": "uni -p mp-weixin",
-    "build:mp-weixin": "uni build -p mp-weixin"
+    "build:mp-weixin": "uni build -p mp-weixin",
+    "build:tax": "npx --yes esbuild@0.21.5 build/tax-src/entry.cjs --bundle --format=esm --platform=neutral --outfile=src/tax/taxEngine.js"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-alpha-5030620261106001",

@@ -7,7 +7,7 @@
           <text class="hero-currency">¥</text>
           <text class="hero-amount">{{ money(tax) }}</text>
         </view>
-        <view class="hero-caption">应纳税额</view>
+        <view class="hero-caption">{{ taxCaption }}</view>
         <view class="hero-stats">
           <view class="hero-stat">
             <text class="stat-label">{{ preTaxLabel }}</text>
@@ -36,21 +36,21 @@
           <text class="info-label">速算扣除数</text>
           <text class="info-value">{{ money(quick) }}</text>
         </view>
-        <template v-if="result.annualTax !== undefined">
+        <template v-if="isAnnualSalary">
           <view class="divider" />
           <view class="info-row">
-            <text class="info-label">年度个税</text>
-            <text class="info-value">{{ money(result.annualTax) }}</text>
+            <text class="info-label">月税前工资</text>
+            <text class="info-value">{{ money(result.preTaxSalary) }}</text>
           </view>
           <view class="divider" />
           <view class="info-row">
-            <text class="info-label">年度税后收入</text>
-            <text class="info-value">{{ money(result.annualNetSalary) }}</text>
+            <text class="info-label">月均税后收入</text>
+            <text class="info-value">{{ money(result.netSalary) }}</text>
           </view>
         </template>
       </view>
 
-      <template v-if="monthlyDetails.length">
+      <template v-if="monthlyDetails.length > 1">
         <view class="section-title">
           <text>每月明细</text>
           <text class="section-link" @tap="openDetail">查看全部 ›</text>
@@ -117,8 +117,12 @@ export default {
     params() {
       return (this.payload && this.payload.params) || {};
     },
+    isAnnualSalary() {
+      return this.payload && this.payload.taxType === '/geshui/' && this.result.calculateType === 'annual';
+    },
     preTax() {
       const r = this.result;
+      if (this.isAnnualSalary) return r.annualPreTaxSalary ?? r.preTaxSalary ?? 0;
       return r.preTaxSalary ?? r.preTaxBonus ?? r.preTaxIncome ?? r.preTax ?? this.params.inputSalary ?? 0;
     },
     tax() {
@@ -127,6 +131,7 @@ export default {
     },
     net() {
       const r = this.result;
+      if (this.isAnnualSalary) return r.annualNetSalary ?? r.netSalary ?? 0;
       return r.netSalary ?? r.netIncome ?? r.annualNetSalary ?? 0;
     },
     taxable() {
@@ -149,13 +154,20 @@ export default {
       return this.result.calculateType === 'monthly' && Number(this.result.month) > 1;
     },
     preTaxLabel() {
+      if (this.isAnnualSalary) return '全年税前收入';
       return this.isMonthly ? '本月税前收入' : '税前收入';
     },
     netLabel() {
+      if (this.isAnnualSalary) return '全年税后收入';
       return this.isMonthly ? '本月税后收入' : '税后收入';
     },
     taxableLabel() {
+      if (this.isAnnualSalary) return '全年应纳税所得额';
       return this.isMonthly ? '累计应纳税所得额' : '应纳税所得额';
+    },
+    taxCaption() {
+      if (this.isAnnualSalary) return '全年应纳税额';
+      return this.isMonthly ? '本月应预扣税额' : '应纳税额';
     },
     formulaMeta() {
       if (!this.payload) return null;

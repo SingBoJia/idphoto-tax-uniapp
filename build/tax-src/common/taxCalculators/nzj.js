@@ -94,20 +94,21 @@ var e = {
                     content: "速算扣除数"
                 }],
                 tipsTitle: "计算说明",
-                tipsList: ["一、征收范围：根据国税发[2005]9号文件规定，纳税人取得全年一次性奖金，单独作为一个月工资、薪金所得计算纳税，由扣缴义务人发放时代扣代缴。", "二、计算方法：", "1. 先将全年一次性奖金除以12个月，按其商数确定适用税率和速算扣除数。", "2. 如果发放当月工资薪金低于费用扣除额，应将奖金减除差额后再确定税率。", "3. 计算公式：", "   - 当月工资≥费用扣除额：应纳税额=奖金×适用税率-速算扣除数", "   - 当月工资<费用扣除额：应纳税额=(奖金-差额)×适用税率-速算扣除数", "4. 一个纳税年度内，该计税办法只允许采用一次。"],
+                tipsList: ["一、政策依据：根据《财政部 税务总局关于延续实施全年一次性奖金个人所得税政策的公告》（2023年第30号），居民个人取得全年一次性奖金，在2027年12月31日前可以选择不并入当年综合所得，单独计算纳税；也可以选择并入当年综合所得计算纳税。", "二、单独计税方法：", "1. 以全年一次性奖金收入除以12个月得到的数额，按照按月换算后的综合所得税率表，确定适用税率和速算扣除数。", "2. 应纳税额 = 全年一次性奖金收入 × 适用税率 - 速算扣除数。", "3. 发放当月工资低于5000元时，不再从奖金中减除差额（该规定已随2019年新个税法实施停止执行）。", "三、注意事项：", "1. 一个纳税年度内，对每一个纳税人，该计税办法只允许采用一次。", "2. 单独计税与并入综合所得的税负可能不同，可在年度汇算时选择更优方式。"],
                 taxBracketsTitle: "年终奖个人所得税率表"
             }
         },
         r = {
             calculateAfterTax: a,
             calculatePreTax: function() {
-                for (var e = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {}, t = Number(e.netSalary || e.netBonus || e.preTaxBonus) || 0, r = t, n = 2 * t, u = (r + n) / 2, o = 0; o < 100;) {
-                    var l = a({
-                        preTaxBonus: u
-                    }).netSalary - t;
-                    if (Math.abs(l) < .01) break;
-                    l > 0 ? n = u : r = u, u = (r + n) / 2, o++
+                var args = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {}, t = Number(args.netSalary || args.netBonus || args.preTaxBonus) || 0, u = t;
+                // 年终奖税后收入关于税前不单调（存在“雷区”），二分法可能落在错误区间。
+                // 按税率档逐档求解 税前 = (税后 - 速算扣除数) / (1 - 税率)，取落在本档区间内的最小解。
+                for (var k = 0, lo = 0, best = null; k < e.annual.length; lo = e.annual[k].threshold, k++) {
+                    var br = e.annual[k], cand = (t - br.quick) / (1 - br.rate);
+                    if (cand > 12 * lo && cand <= 12 * br.threshold && (best === null || cand < best)) best = cand;
                 }
+                if (best !== null) u = best;
                 for (var i = Math.round(100 * Number(t.toFixed(2))), x = Math.round(100 * u), c = a({
                         preTaxBonus: x / 100
                     }); Math.round(100 * c.netSalary) < i;) c = a({

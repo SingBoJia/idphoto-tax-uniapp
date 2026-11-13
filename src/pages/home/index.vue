@@ -67,12 +67,19 @@
 <script>
 import { todayText } from '@/utils/format';
 
+const TAB_PAGES = ['/pages/home/index', '/pages/idphoto/index', '/pages/tax/index', '/pages/mine/index'];
+
 export default {
   data() {
     return { today: todayText() };
   },
   methods: {
     go(url) {
+      const path = url.split('?')[0];
+      if (TAB_PAGES.includes(path)) {
+        uni.switchTab({ url: path });
+        return;
+      }
       uni.navigateTo({ url });
     }
   }

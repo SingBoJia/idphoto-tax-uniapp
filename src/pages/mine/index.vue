@@ -57,6 +57,8 @@
 </template>
 
 <script>
+import { clearSavedPhotos } from '@/services/photo';
+
 export default {
   methods: {
     clearData() {
@@ -66,6 +68,7 @@ export default {
         success: (res) => {
           if (!res.confirm) return;
           uni.clearStorageSync();
+          clearSavedPhotos();
           uni.showToast({ title: '已清除', icon: 'none' });
         }
       });

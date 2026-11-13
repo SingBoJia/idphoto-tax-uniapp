@@ -82,8 +82,10 @@
 </template>
 
 <script>
-import { taxService, taxFieldConfig } from '@/tax';
+import { calculateTax, taxFieldConfig } from '@/tax';
 import { TAX_TYPE_NAMES } from '@/data/taxTypes';
+
+const labelText = (label) => String(label || '该项').replace(/[（(].*$/, '').trim() || '该项';
 
 export default {
   data() {
@@ -144,21 +146,33 @@ export default {
     },
     calculate() {
       const params = {};
+      let negative = '';
       this.config.fields.forEach((field) => {
         const value = this.values[field.inputName];
-        if (field.inputName === 'taxpayerType') {
+        if (field.textType !== 'input') {
           params[field.inputName] = value;
         } else if (value !== '' && value !== null && value !== undefined) {
-          params[field.inputName] = Number(value) || 0;
+          const n = Number(value) || 0;
+          if (n < 0 && !negative) negative = labelText(this.labelOf(field));
+          params[field.inputName] = n;
         }
       });
-      if (!params.inputSalary) {
+      if (!params.inputSalary || params.inputSalary <= 0) {
         uni.showToast({ title: '请输入金额', icon: 'none' });
+        return;
+      }
+      if (negative) {
+        uni.showToast({ title: `${negative}不能为负数`, icon: 'none' });
+        return;
+      }
+      // 解除劳动合同补偿：免税额度 = 当地上年职工平均工资 × 3，不填会把全部补偿金计税
+      if (this.type === '/jcchtax/' && !params.avgSalary) {
+        uni.showToast({ title: '请填写当地上年职工平均工资', icon: 'none' });
         return;
       }
       if (this.activeTab === 1) params.isBackward = true;
       try {
-        const result = taxService.calculate({ taxType: this.type, params });
+        const result = calculateTax({ taxType: this.type, params });
         uni.setStorageSync('tax:lastResult', {
           title: this.typeName,
           taxType: this.type,

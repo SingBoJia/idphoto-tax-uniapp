@@ -101,7 +101,8 @@ export default {
   },
   computed: {
     filteredSpecs() {
-      const key = this.keyword.trim();
+      // 支持 “295×413”“295*413”“295X413” 等写法
+      const key = this.keyword.trim().replace(/\s+/g, '').replace(/[×*X＊]/g, 'x');
       return SPECS.filter((spec) => {
         const categoryOk = this.category === '全部' || spec.category === this.category;
         const keywordOk =
